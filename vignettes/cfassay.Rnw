@@ -1,0 +1,180 @@
+%\VignetteIndexEntry{CFAssay}
+%\VignetteDepends{}
+%\VignetteKeywords{Colony formation assay, linear-quadratic model}
+%\VignettePackage{CFAssay}
+
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+\documentclass[11pt, a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage[authoryear,round]{natbib}
+\usepackage{hyperref}
+\usepackage{a4wide}
+\usepackage[utf8]{inputenc}
+%\pagestyle{myheadings}
+%\markright{30.3.2014}
+
+\begin{document}
+
+\title{\bf CFAssay: Statistics of the Colony Formation Assay}
+\author{Herbert Braselmann}
+
+\maketitle
+
+\begin{center}
+Research Unit Radiation Cytogenetics, Group Integrative Biology\\
+Helmholtz Zentrum M\"unchen
+\end{center}
+
+\begin{center}
+{\tt braselm@helmholtz-muenchen.de}
+\end{center}
+
+\tableofcontents
+
+
+%============================================================
+\section{Overview}
+The functions in this package provide tools for statistical analysis along with the colony formation assay (CFA) \citep{franken2006}. These allow fitting of the linear-quadratic (LQ) model for ionizing radiation dependent cell survival curves and ANOVA (analysis of variance) for experimental two-way designs with one dose level of a treatment factor. Maximum-Likelihood (ML) based methods are preferred because, theoretically, parameter estimations of ML for Poisson distributed data come with smaller variances compared to other methods. However, for the sake of comparibility also simple least square (LS) based methods can be optionally used. The ML based methods employ the R-function {\tt glm} for generalised linear modelling, while LS based methods use the R-function {\tt lm}. The functions provided by CFAssay intend to simplify and specialize the general use of that R-functions. The underlying distribution for the ML based methods is Poisson \citep{frome1968} and modelling is performed using the link function "log", i.e. cell survival curves are logarithmically linear with "linear" parameters $\alpha$ (per dose unit) and $\beta$ (per squared-dose unit). In the two-way ANOVA model the dependency of treatment factors is considered as logarithmically additive. Output summaries are adapted from the {\tt glm} or the {\tt lm} functions and use the terminology of quantities in the CFA.
+
+\subsection{The models}
+Cell survival $S$ as a function of radiation dose using the so called LQ-model is given by
+
+\begin{equation} S = S(D) = e^{c + \alpha D + \beta D^2} \end{equation}
+
+$D$ is the radiation dose and named {\tt dose} in the code. $D^2$ is named {\tt dose2} but has not to be set by the user. Coefficients $\alpha$ and $\beta$ appear as "alpha" and "beta" in the print function of CFAssay. The intercepts $c = log(S0)$ represent the logarithmic plating efficiencies, i.e. surviving fractions of untreated cells in replicated experiments. They correspond to variable {\tt Exp} which is treated as a factor. Due to the positive formulation (1), parameters $c$, $\alpha$ and $\beta$ take negative values in the fit results.
+
+The logarithmically additive 2-way ANOVA with two levels for each of the two factors can mathematically be formulated as
+
+\begin{equation} S = e^{c + Ax_1 + Bx_2 + Dx_1x_2} \end{equation}
+or as nested parametrization
+\begin{equation} S = e^{c+Ax_1+B_0x_2+(B_1-B_0)x_1x_2}  \end{equation}
+
+There $x_1$, $x_2$ take level values 0 or 1 for each of the two factors $A$ or $B$, where for e.g. 0 means untreated and 1 means treated. $D$ is the factor for potential interaction and is coded as {\tt A:B} in R. In the second, nested parametrization $B_0$ is the effect of treatment in control cells and $B_1$ the treatment effect after after applying $A$. The interaction $D$ is then the difference between $B_1$ and $B_0$. In the function {\tt cfa.2way} of CFAssay we use per default the nested version, coded as {\tt A/B} (see "An Introduction to R", Chapter 11 Statistical models in R). $c$ represents again the logarithmic plating efficiencies for each experiment.
+
+\subsection{Remark on intercepts $c$ and plating efficiencies}
+By default CFAssay processes plating efficiencies (PE) from replicate experiments as model parameters, i.e. as intercepts $c$, controlled by setting the option parameter {\tt PEmethod} to {\tt "fit"}. From a statistical point of view, this appears to be preferable, because likewise the colony counts from treated cells the data from untreated cells are random observations. The shape parameters $\alpha$ and $\beta$ can be viewed as averaged over the experiments. The conventional normalization method ({\tt PEmethod = "fix"}) that is applied on experimental replicate  PE measurements is mathematically equivalent to forcing the mean curve of the data to go through the intercept of each particular replicate curve. In the case of somewhat increased variation between the shape parameters of different experiments, conventional normalization results in a larger dispersion parameter in combination with the ML method. In this case, fitted intercepts $c$ (named PE in the printed output) may deviate from the measured PEs, however, they result in better overall statistics. On the shape parameter values itself, it has little influence. Thus, it is more a matter of scale, what can be visualized in the diagnostic plots using the function {\tt plotExp}.
+
+
+%============================================================
+\section{Example: Linear-quadratic model for cell survival curves}
+The data file contains data sets on irradiation experiments of the two cell lines CAL 33 \citep{bauer2010} and OKF6T/TERT1. The data set on CAL 33 comprises 4 repeated experiments, and that of OKF6T/TERT1 8 experiments. The workflow shown here is divided in the following three steps: 1. data input and double-check, 2. calculation of cell survival curves for each of the two cell lines separately, 3. comparison test of the curves for the two experiments
+
+\subsection{Data input and double-check}
+First we load the library and read the data into the memory. The data file, expl1{\_}cellsurvcurves.txt, is an unformatted tab-delimited text file and contains the data from the two irradiation experiments.
+<<eval=TRUE, echo=TRUE>>=
+library(CFAssay)
+datatab<- read.table(system.file("doc", "expl1_cellsurvcurves.txt", package="CFAssay"), header=TRUE, sep="\t")
+@
+
+The data file contains columns with header names {\tt cline, Exp, dose, ncells and ncolonies}. {\tt cline} distinguishes the curves in the data frame. {\tt Exp} discriminates replicates within each curve. The {\tt dose} column relates to the applied radiation dose, {\tt ncells} to the number of cells seeded and {\tt ncolonies} to the number of counted colonies. The last four names are required by the CFAssay function. The name of the first column (here {\tt "cline"}) is arbitrary and additional columns for the distinction of curves may be contained in the data frame, e.g. pre-treatment.
+<<eval=TRUE, echo=TRUE>>=
+names(datatab)
+head(datatab, 3)  # First 3 lines
+@
+
+It is advisable to double-check the number of rows, columns and frequencies or cross frequencies of the data with the R functions {\tt dim} and {\tt table}. The output is not shown here.
+<<eval=FALSE, echo=TRUE>>=
+dim(datatab)
+table(datatab$cline)
+table(datatab$cline, datatab$Exp)
+table(datatab$cline, datatab$dose)
+@
+
+\subsection{Calculation of cell survival curves}
+With the CFAssay function {\tt cellsurvLQfit} we calculate the parameters of a linear-quadratic cell survival curve along with quality or goodness-of-fit statistics. For that purpose the data frame {\tt datatab} has to be filtered for data relating to one curve only, because the variable {\tt cline} is ignored by the fit function. With the function {\tt print} the result is shown in three tables, the coefficient table, the observed and fitted plating efficiencies table and a table for analysis of the residual sum of weighted squares in the replicate experiments. In the coefficient table the "t value" column represents values of the t-test against zero of the estimated coefficients ("Estimate") and column "Pr(>|t|)" contains the corresponding p-values. By default the maximum-likelihood method is used and plating efficiencies are fitted as intercepts. Other options can be chosen in the argument list of {\tt cellsurvLQfit} as explained in the help document.
+<<eval=TRUE, echo=TRUE>>=
+  X<- subset(datatab, cline=="okf6TERT1")
+  dim(X)
+  fit<- cellsurvLQfit(X)
+  print(fit)
+@
+
+If the dispersion parameter is high, experimental data may have to be removed or replaced. An appropriate cut-off depends on experience and may vary between different labs. For the example data, where plating efficiencies were fitted, we recommend a cut-off of 9.0, which corresponds to 3 Poisson standard deviations. With fixed plating efficiencies a cut-off of 12.0 may be appropriate. For the pure Poisson distribution the expected value of the dispersion parameter is 1.0.
+
+A plot of the mean curve is generated with {\tt plot}. Values of plotted mean survival fractions and error bars are shown with functions {\tt sfpmean} and {\tt pes}.
+<<fig1, fig=TRUE, prefix=FALSE, echo=TRUE, include=TRUE>>=
+  plot(fit)
+  sfpmean(X, pes(X)$S0)
+@
+
+With {\tt plotExp} diagnostic plots for each experiment are generated. Here we plot them into a pdf-file.
+<<eval=FALSE, echo=TRUE>>=
+  pdf("okf6TERT1_experimental_plots.pdf")
+  	plotExp(fit)
+  dev.off()
+@
+
+The procedure is repeated for the other cell line, "cal33". The result is not shown here.
+<<eval=FALSE, echo=TRUE>>=
+  X<- subset(datatab, cline=="cal33")
+  dim(X)
+  fit<- cellsurvLQfit(X)
+  print(fit)
+  plot(fit)
+  plotExp(fit)
+@
+
+
+\subsection{Comparison of the two cell survival curves}
+The two linear-quadratic cell survival curves are compared with the CFAssay function {\tt cellsurvLQdiff}. The required argument {\tt curvevar} is set to {\tt "cline"}, which is the name of the column in {\tt datatab} which distinguishes the two curves to be compared. The function uses an ANOVA test for comparison of two model fits. In "Model 1", which corresponds to the Null-hypothesis, the dose coefficient (alpha) and the dose-squared coefficient (beta) are independent of the two curves. In "Model 2" the coefficients are different. Detailed results are printed with function {\tt print}.
+<<eval=TRUE, echo=TRUE>>=
+  fitcomp<- cellsurvLQdiff(datatab, curvevar="cline")
+  print(fitcomp)
+@
+
+The two curves are plotted with different colors in one plot, using the option {\tt add=TRUE}. Further annotations can be added by the user to the plot with the R functions {\tt legend} and {\tt text} as needed.
+<<fig2, fig=TRUE, prefix=FALSE, echo=TRUE, include=TRUE>>=
+  plot(cellsurvLQfit(subset(datatab, cline=="okf6TERT1")), col=1)
+  plot(cellsurvLQfit(subset(datatab, cline=="cal33")), col=2, add=TRUE)
+  legend(0, 0.02, c("OKF6/TERT1", "CAL 33"), text.col=1:2)
+@
+
+
+%============================================================
+\section{Example: ANOVA for experimental two-way design}
+In this section a two-way ANOVA is demonstrated for the human oesophageal adenocarcinoma cell line OE19 which was treated with the chemotherapeutic drug cisplatin/5-FU before and after siRNA transfection. The results were previously published in \citep{aichler2013}. Of special interest was a potential interaction, i.e. chemosensitisation between the siRNA transfection and the drug effect.
+
+\subsection{Data input and double-check}
+First the data are read into memory.
+<<eval=TRUE, echo=TRUE>>=
+datatab<- read.table(system.file("doc", "exp2_2waycfa.txt", package="CFAssay"), header=TRUE, sep="\t")
+@
+
+The data file contains columns with header names {\tt Exp, x5fuCis, siRNA, ncells and ncolonies}. {\tt x5fuCis} and {\tt siRNA} stand for the drug and biological treatment, respectively. They take values 0 for control or 1 for treated. The names of the other columns are as in the cell survival curve example.
+<<eval=TRUE, echo=TRUE>>=
+names(datatab)
+head(datatab, 3) # First 3 lines
+@
+
+Again, number of rows and columns and frequencies or cross frequencies of the data may be checked with R functions {\tt dim} and {\tt table} (output not shown).
+<<eval=FALSE, echo=TRUE>>=
+dim(datatab)
+table(datatab$x5fuCis)
+table(datatab$siRNA)
+table(datatab$Exp, datatab$x5fuCis)
+table(datatab$Exp, datatab$siRNA)
+@
+
+\subsection{ANOVA model}
+Statistical analysis is performed with CFAssay function {\tt cfa2way}, using parametrisation option  {\tt "A/B"} corresponding to formula (3). In the argument list {\tt A} and {\tt B} have to be set as shown. Maximum-likelihood method is default, but least-squares can be chosen optionally. The output shows the result of a test for interaction.
+<<eval=TRUE, echo=TRUE>>=
+  fitcomp<- cfa2way(datatab, A="siRNA", B="x5fuCis", param="A/B")
+@
+
+Detailed results are shown with function {\tt print.cfa2wayfit}. In the output {\tt A0:B1} and {\tt A1:B1} correspond to $B_0$ and $B_1$ in formula (3). 
+<<eval=TRUE, echo=TRUE>>=
+print(fitcomp, labels=c(A="siRNA", B="x5fuCis"))
+@
+
+Diagnostic plots for repeated experiments are printed to pdf.
+<<eval=FALSE, echo=TRUE>>=
+  pdf("TwoWay_experimental_plots.pdf")
+    plotExp(fitcomp, labels=c(A="siRNA", B="x5fuCis"))
+  dev.off()
+@
+
+\bibliographystyle{apalike}
+\bibliography{cfassay}
+
+\end{document}
