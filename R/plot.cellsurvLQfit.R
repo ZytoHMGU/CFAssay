@@ -22,6 +22,7 @@ plot.cellsurvLQfit <- function(x, xlim=NULL, ylim=c(0.008, 1.0), xlab="Dose (Gy)
     nc <- length(unique(data$Exp))
     # Plating efficiencies from seperate experiment fits (ML, possibly without 0-dose data):
 	S0 <- pes(data)$S0  #CFAssay function pes
+  names(S0) <- rownames(pes(data))
 	meanSF <- sfpmean(data, S0)  #CFAssay function sfpmean
 	}
 	if("pe" %in% names(data)) meanSF <- sfpmean(data)

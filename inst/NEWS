@@ -1,0 +1,5 @@
+
+History
+=======
+ver 1.5.2 2016/03/23
+Bugfixes mainly in function sfpmean: affects input data sets, where technical replicates (flasks, dishes or wells) within one experiment (biological replicate) are not pooled, but recorded row by row. Then the total number of all data records per radiation dose is larger than the number of items of S0 which is equal to the number of experiments. This is now recognized. Affects also function plot.cellsurvLQfit.

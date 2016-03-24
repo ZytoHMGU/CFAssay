@@ -20,14 +20,14 @@ A data frame which contains columns \code{Exp, dose, ncells, ncolonies}.
 In the data frame \code{X}, \code{Exp} identifies the experimental replicates and may be numeric or non-numeric. 
 }
 \value{
-The function returns a data frame with two columns \code{pe} and \code{S0}. The first column contains the measured plating efficiencies the second column contains plating efficiencies fitted separately for each repeated experiments. Rows of the data frame are named for the different experiments.
+The function returns a data frame with three columns \code{Exp}, \code{pe} and \code{S0}, containing experiment identifiers (biological replicates), measured plating efficiencies and plating efficiencies fitted separately for each repeated experiments. Rows of the data frame are named for the different experiments.
 }
 \author{
 Herbert Braselmann
 }
 \examples{
-datatab<- read.table(system.file("doc", "expl1_cellsurvcurves.txt", package="CFAssay"), header=TRUE, sep="\t")
-X<- subset(datatab, cline=="okf6TERT1")  #Specification of curve
+datatab <- read.table(system.file("doc", "expl1_cellsurvcurves.txt", package="CFAssay"), header=TRUE, sep="\t")
+X <- subset(datatab, cline=="okf6TERT1")  #Specification of curve
 pes(X)
 pes(subset(datatab, cline=="cal33") )
 }
