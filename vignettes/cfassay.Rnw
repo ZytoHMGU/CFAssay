@@ -97,7 +97,9 @@ If the dispersion parameter is high, experimental data may have to be removed or
 A plot of the mean curve is generated with {\tt plot}. Values of plotted mean survival fractions and error bars are shown with functions {\tt sfpmean} and {\tt pes}.
 <<fig1, fig=TRUE, prefix=FALSE, echo=TRUE, include=TRUE>>=
   plot(fit)
-  sfpmean(X, pes(X)$S0)
+  S0 <- pes(X)$S0
+  names(S0) <- pes(X)$Exp
+  sfpmean(X, S0)
 @
 
 With {\tt plotExp} diagnostic plots for each experiment are generated. Here we plot them into a pdf-file.

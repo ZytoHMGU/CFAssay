@@ -29,7 +29,7 @@ sf.mean <- function(X)
 	if(!is.null(S0)) #attention for change of S0!
     if(is.null(names(S0))) stop("S0 is not a named vector!")
     if(length(grep("(Exp)", names(S0))) == length(unique(X$Exp)))
-      {ExpNames <- sapply(1:(nr-2), function(i) strsplit(names(S0)[i], ")")[[1]][2])} else
+      {ExpNames <- sapply(1:length(S0), function(i) strsplit(names(S0)[i], ")")[[1]][2])} else
       {ExpNames <- names(S0)}
   if(!all(sort(unique(X$Exp)) == sort(ExpNames))) stop("Mismatch of experiment names in data frame and names of S0!")
   S01 <- sapply(1:nrow(X), function(i) S0[X$Exp[i]])

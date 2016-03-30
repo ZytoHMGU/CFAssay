@@ -18,7 +18,7 @@ pes <- function(X)
 	S0 <- sapply(1: nexp, function(i) glm(ncolonies ~ dose + dose2, offset=lcells, family=quasipoisson(link="log"), data=subset(X, Exp==uexp[i]))$coef[1])
 	  S0 <- exp(S0)
 
-	sf0 <- data.frame(pe, S0)
-	rownames(sf0) <- paste("Exp_", uexp, sep="")
+	sf0 <- data.frame(Exp=uexp, pe, S0)
+	rownames(sf0) <- uexp
 	sf0
 }

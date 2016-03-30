@@ -33,6 +33,7 @@ datatab <- read.table(system.file("doc", "expl1_cellsurvcurves.txt", package="CF
 X <- subset(datatab, cline=="okf6TERT1")
 S0 <- pes(X)$pe  #observed plating efficiencies
 length(S0)==length(unique(X$Exp)) #length ok?
+names(S0) <- pes(X)$Exp
 sfpmean(X, S0)
 fit <- cellsurvLQfit(X)
 fit$coef  #contains fitted log-pe
