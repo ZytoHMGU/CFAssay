@@ -39,7 +39,7 @@ print.cellsurvLQfit <- function(x, ...) {
 	catln("Observed and fitted plating efficiencies (%):")
 	plefit <- exp(coef[1:(nr-2),1])
 	ple <- sapply(1:length(uexpfit), function(i) {ind <- which(data0$Exp==uexpfit[i]); sum(data0$ncolonies[ind])/(sum(data0$ncells[ind]))})
-	if(!all(sort(uexp) == sort(uexpfit))) stop("Mismatch of experiment names and coefficient names!")
+	#if(!all(sort(uexp) == sort(uexpfit))) stop("Mismatch of experiment names and coefficient names!")
 	print(data.frame(Experiment=uexpfit, PE=round(ple*100,1), PEfitted=round(plefit*100,1)))
 	}
 

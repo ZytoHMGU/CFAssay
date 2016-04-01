@@ -51,7 +51,9 @@ datatab<- read.table(system.file("doc", "expl1_cellsurvcurves.txt", package="CFA
 X<- subset(datatab, cline=="okf6TERT1")
 fit<- cellsurvLQfit(X)
 plot(fit)
-sfpmean(X, pes(X)$S0) #values of plotted mean survival fractions and error bars 
+S0 <- pes(X)$S0
+names(S0) <- pes(X)$Exp
+sfpmean(X, S0) #values of plotted mean survival fractions and error bars 
 # add second plot
 plot(cellsurvLQfit(subset(datatab, cline=="cal33")), col=2, add=TRUE)
 
