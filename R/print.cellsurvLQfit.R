@@ -16,8 +16,6 @@ print.cellsurvLQfit <- function(x, ...) {
 	coef <- sfit$coef
 	nr <- nrow(coef)
 	uexp <- unique(fit$data$Exp)  #unique experiment numbers
-	uexpfit<- sapply(1:(nr-2), function(i) strsplit(rownames(coef)[i], ")")[[1]][2])
-	if(!all(sort(uexp) == sort(uexpfit))) stop("Mismatch of experiment names and coefficient names!")
   
 ## Coeffients
 	catln("*** Coefficients of LQ-model for cell survival ***")
@@ -26,6 +24,7 @@ print.cellsurvLQfit <- function(x, ...) {
 	catln()
 
 	if(fit$PEmethod == "fit") {
+	uexpfit<- sapply(1:(nr-2), function(i) strsplit(rownames(coef)[i], ")")[[1]][2])
 	nam <- sub("factor\\(Exp\\)","PE",rownames(coef))
 	nam[(nr-1):nr] <- c("alpha","beta")
 	rownames(coef) <- nam
@@ -40,6 +39,7 @@ print.cellsurvLQfit <- function(x, ...) {
 	catln("Observed and fitted plating efficiencies (%):")
 	plefit <- exp(coef[1:(nr-2),1])
 	ple <- sapply(1:length(uexpfit), function(i) {ind <- which(data0$Exp==uexpfit[i]); sum(data0$ncolonies[ind])/(sum(data0$ncells[ind]))})
+	if(!all(sort(uexp) == sort(uexpfit))) stop("Mismatch of experiment names and coefficient names!")
 	print(data.frame(Experiment=uexpfit, PE=round(ple*100,1), PEfitted=round(plefit*100,1)))
 	}
 
@@ -58,10 +58,10 @@ print.cellsurvLQfit <- function(x, ...) {
 	catln("Residual Degrees of Freedom:", fit$df.residual)
 	if("ml" %in% fit$type) catln("Dispersion parameter:", sfit$dispersion)
 	if("franken" %in% fit$type) catln("Multiple R-squared:", sfit$r.squared)
-	rssw <- sapply(1:length(uexpfit), function(i) {ind <- which(fit$data$Exp==uexpfit[i]); sum(fit$residuals[ind]^2*fit$weight[ind])})
+	rssw <- sapply(1:length(uexp), function(i) {ind <- which(fit$data$Exp==uexp[i]); sum(fit$residuals[ind]^2*fit$weight[ind])})
 	catln()
 	catln("Fraction rssw of rsswTot per Experiment")
-	print(data.frame(Experiment=uexpfit, rssw=round(rssw,2), perCent=round(rssw/rsswTot*100,1)))
+	print(data.frame(Experiment=uexp, rssw=round(rssw,2), perCent=round(rssw/rsswTot*100,1)))
 	}
 
 ## Quality parameters ls	
@@ -72,10 +72,10 @@ print.cellsurvLQfit <- function(x, ...) {
 	catln("Total residual sum of squares rssTot:", rssTot)
 	catln("Residual Degrees of Freedom:", fit$df.residual)
 	catln("Multiple R-squared:", sfit$r.squared)
-	rss <- sapply(1:length(uexpfit), function(i) {ind <- which(fit$data$Exp==uexpfit[i]); sum(fit$residuals[ind]^2)})
+	rss <- sapply(1:length(uexp), function(i) {ind <- which(fit$data$Exp==uexp[i]); sum(fit$residuals[ind]^2)})
 	catln()
 	catln("Fraction rss of rssTot per Experiment")
-	print(data.frame(Experiment=uexpfit, rss=round(rss,2), perCent=round(rss/rssTot*100,1)))
+	print(data.frame(Experiment=uexp, rss=round(rss,2), perCent=round(rss/rssTot*100,1)))
 	}
 	
 }
