@@ -26,7 +26,7 @@ sf.mean <- function(X)
 	#pleExp <- sapply(1:nrow(X1), function(i) ple[which(uexp==X1$Exp[i])]) #assign to experiment
 	  pmean <- sapply(1:length(doses), function(i) {X1 <- subset(data.frame(X, S0=X$pe), dose==doses[i]); sf.mean(X1)})
 	}
-	if(!is.null(S0)) #attention for change of S0!
+	if(!is.null(S0)) { #attention for change of S0!
     if(is.null(names(S0))) stop("S0 is not a named vector!")
     if(length(grep("(Exp)", names(S0))) == length(unique(X$Exp)))
       {ExpNames <- sapply(1:length(S0), function(i) strsplit(names(S0)[i], ")")[[1]][2])} else
@@ -35,7 +35,7 @@ sf.mean <- function(X)
   S01 <- sapply(1:nrow(X), function(i) S0[X$Exp[i]])
   X$S0 <- S01  # attention: X$S0 not S0
   pmean <- sapply(1:length(doses), function(i) {X1 <- subset(X, dose==doses[i]); sf.mean(X1)})
-
+	}
 	colnames(pmean) <- paste("dose_",doses,sep="")
 	rownames(pmean) <- 1:nrow(pmean)
 	rownames(pmean)[1:2] <- c("SF", "stdev")
