@@ -11,4 +11,4 @@ Description: The package provides functions for calculation of
         experimental 2-way designs along with the colony formation
         assay.
 License: LGPL
-biocViews: CellBasedAssays, CellBiology, Regression, Survival
+biocViews: CellBasedAssays, CellBiology, ImmunoOncology, Regression, Survival
