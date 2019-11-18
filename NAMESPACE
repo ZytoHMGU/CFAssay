@@ -1,1 +1,7 @@
 exportPattern("^[[:alpha:]]+")
+S3method(plot, cellsurvLQfit)
+S3method(print, cellsurvLQfit)
+S3method(print, cellsurvLQdiff)
+S3method(print, cfa2way)
+S3method(plotExp, cellsurvLQfit)
+S3method(plotExp, cfa2way)
